@@ -5,7 +5,7 @@
     "widgets": {
       "left": {
         "comp": "verint-iframe",
-        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.0/verintHandler.js",
+        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandler.js",
         "attributes": {
           "baseUrl": "https://YOUR-VERINT-HOST/interactions/create",
           "idleUrl": "https://YOUR-VERINT-HOST/",

@@ -11,7 +11,7 @@ For a friendly walkthrough of every option, see [`verint_widget_guide.html`](ver
 Load the script from jsDelivr and add the widget to the agent, supervisor or supervisorAgent `navigation`. Pin a version tag so layouts don't change under you:
 
 ```
-https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.0/verintHandler.js
+https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandler.js
 ```
 
 ```json
@@ -22,7 +22,7 @@ https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.0/verintHandle
     "widgets": {
       "left": {
         "comp": "verint-iframe",
-        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.0/verintHandler.js",
+        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandler.js",
         "attributes": {
           "baseUrl": "https://YOUR-VERINT-HOST/interactions/create",
           "idleUrl": "https://YOUR-VERINT-HOST/",

@@ -118,11 +118,14 @@ class VerintIframe extends HTMLElement {
     const track = () => {
       if (!alive) return;
       const r = slot.getBoundingClientRect();
-      const sig = r.left + ',' + r.top + ',' + r.width + ',' + r.height;
+      // position:fixed is measured from the nearest ancestor with a transform/filter/contain, not the
+      // window, so subtract where the layer (top:0; left:0) actually ended up
+      const o = KEEP.layer.getBoundingClientRect();
+      const sig = r.left + ',' + r.top + ',' + r.width + ',' + r.height + ',' + o.left + ',' + o.top;
       if (sig !== last) {
         last = sig;
-        iframe.style.left = r.left + 'px';
-        iframe.style.top = r.top + 'px';
+        iframe.style.left = (r.left - o.left) + 'px';
+        iframe.style.top = (r.top - o.top) + 'px';
         iframe.style.width = r.width + 'px';
         iframe.style.height = r.height + 'px';
       }
