@@ -13,38 +13,57 @@ For a friendly walkthrough of every option, see [`verint_widget_guide.html`](ver
 Load the script from jsDelivr and add the widget to the agent, supervisor or supervisorAgent `navigation`. Pin a version tag so layouts don't change under you:
 
 ```
-https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.1.0/verintHandler.js
+https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.2.0/verintHandler.js
 ```
 
 ```json
 {
-  "nav": { "label": "Verint CRM", "icon": "https://example.com/verint-icon.png", "iconType": "other", "navigateTo": "verint-crm", "align": "top" },
+  "nav": {
+    "label": "Verint CRM",
+    "icon": "https://example.com/verint-icon.png",
+    "iconType": "other",
+    "navigateTo": "verint-crm",
+    "align": "top"
+  },
   "page": {
     "id": "verint-crm",
     "widgets": {
       "left": {
         "comp": "verint-iframe",
-        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.1.0/verintHandler.js",
+        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.2.0/verintHandler.js",
         "attributes": {
           "baseUrl": "https://YOUR-VERINT-HOST/interactions/create",
           "idleUrl": "https://YOUR-VERINT-HOST/",
-          "popNewCallsOnWidget": "$STORE.agentContact.taskSelected.callAssociatedData.popNewCallsOnWidget.value",
           "keepAlive": "true",
-          "muniValue": "MUNI",
-          "callType": "$STORE.agentContact.taskSelected.callAssociatedData.CallType.value",
-          "channelKey": "$STORE.agentContact.taskSelected.callAssociatedData.Channel_Key.value",
-          "flexibleId": "$STORE.agentContact.taskSelected.callAssociatedData.Flexible_Id.value",
-          "ciscoCallId": "$STORE.agentContact.taskSelected.callAssociatedData.Cisco_Call_Id.value",
-          "customerPhone": "$STORE.agentContact.taskSelected.callAssociatedData.Customer_Phone.value"
+          "muniValue": "MUNI"
+        },
+        "properties": {
+          "callAssociatedData": "$STORE.agentContact.taskSelected.callAssociatedData"
         }
       }
     },
-    "layout": { "areas": [["left"]], "size": { "cols": [1], "rows": [1] } }
+    "layout": {
+      "areas": [
+        [
+          "left"
+        ]
+      ],
+      "size": {
+        "cols": [
+          1
+        ],
+        "rows": [
+          1
+        ]
+      }
+    }
   }
 }
 ```
 
-A copy is in [`example-layout-snippet.json`](example-layout-snippet.json). Replace `YOUR-VERINT-HOST` and the variable names to match your flow. The variables must be marked Agent Viewable in the flow.
+A copy is in [`example-layout-snippet.json`](example-layout-snippet.json). Replace `YOUR-VERINT-HOST`. The flow variables must be marked Agent Viewable in the flow.
+
+**Call data goes in `properties`, as one object.** Do not bind each variable as its own attribute (`$STORE.agentContact.taskSelected.callAssociatedData.X.value`): on the Desktop that stopped the widget from showing at all. The single `callAssociatedData` property is the same pattern the Desktop's own widgets use.
 
 ## Behavior
 
@@ -68,11 +87,23 @@ WxCC passes attribute names in lowercase; the widget handles that.
 |---|---|
 | `baseUrl` | Verint create-interaction URL (required, https) |
 | `idleUrl` | Page shown before any call is popped |
-| `popNewCallsOnWidget` | Flow variable that enables the screen pop per call |
-| `callType`, `muniValue` | Call type and the value that drops `context` and `phone` |
-| `channelKey`, `flexibleId`, `ciscoCallId`, `customerPhone` | Flow variables used in the URL |
+| `muniValue` | The call type that drops `context` and `phone` (default `MUNI`) |
+| `popVar`, `callTypeVar`, `channelKeyVar`, `flexibleIdVar`, `callIdVar`, `phoneVar` | Your flow variable names, only if they differ from the defaults below |
 | `keepAlive` | Off unless set to `true` (also `1` or `yes`), the same as `iframe-component` |
 | `keepAliveZ` | Optional z-index for the keep-alive layer, the same as `iframe-component` |
+
+## Flow variables (read from the `callAssociatedData` property)
+
+| Default name | Used for | Rename with |
+|---|---|---|
+| `popNewCallsOnWidget` | `true`, `1` or `yes` opens the Verint page for this call | `popVar` |
+| `CallType` | Compared with `muniValue` | `callTypeVar` |
+| `Channel_Key` | `channel` | `channelKeyVar` |
+| `Flexible_Id` | `source_id` | `flexibleIdVar` |
+| `Cisco_Call_Id` | `external_ref`; each call id opens only once | `callIdVar` |
+| `Customer_Phone` | `phone` (not for MUNI calls) | `phoneVar` |
+
+The older per-variable attributes (`ciscoCallId`, `channelKey`, ...) are still read for compatibility, but should not be used.
 
 ## Keep-alive
 
@@ -87,6 +118,7 @@ Filter the browser console on `verint-iframe`. It logs each decision: `Loading: 
 - **Blank or "refused to connect":** the Verint host, or the sign-in page it redirects to, does not allow being framed by the Desktop. The site must allow `frame-ancestors` for your Desktop origin and use `SameSite=None; Secure` session cookies. This is outside the widget's control.
 - **Nothing appears at all:** check the script request in the Network tab and that the layout `comp` is `verint-iframe`.
 
-## Not verified
+## Status
 
-Tested in a real browser side by side with `iframe-component` (same page, same size, both scripts on one page), plus the pop and keep-alive cases. Not yet confirmed on a live Desktop. Test with `keepAlive` off first, since that path matches `iframe-component` exactly, then with it on.
+- **Confirmed on a live Desktop:** the page loads with the property-style layout and `keepAlive` off.
+- **Tested in a real browser only:** the screen pop (needs the customer's flow variables) and `keepAlive` on.

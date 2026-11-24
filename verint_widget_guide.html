@@ -53,7 +53,7 @@
 <div class="wrap">
 
 <h2>How it works, in 4 steps</h2>
-<p class="sub">Everything is set in the <code>attributes</code> of the <code>verint-iframe</code> entry in your desktop layout, plus a few flow variables.</p>
+<p class="sub">Everything is set in the <code>verint-iframe</code> entry in your desktop layout: a few <code>attributes</code>, one <code>properties</code> line that hands over the call data, and a few flow variables.</p>
 <div class="steps">
   <div class="step"><b>1</b><br><strong>Desktop loads</strong><br>The widget shows your <code>idleUrl</code>, such as the Verint home page, as soon as the tab is opened.</div>
   <div class="step"><b>2</b><br><strong>A call arrives</strong><br>The flow can set <code>popNewCallsOnWidget</code> and the values the Verint page needs.</div>
@@ -100,26 +100,26 @@
   <tr><th>Attribute</th><th>Needed?</th><th>Meaning</th></tr>
   <tr><td><code>baseUrl</code></td><td>Yes</td><td>The Verint create-interaction address. Must start with <code>https://</code>.</td></tr>
   <tr><td><code>idleUrl</code></td><td>Recommended</td><td>The page shown before any call is popped. Without it the tab shows "Waiting for an active call".</td></tr>
-  <tr><td><code>popNewCallsOnWidget</code></td><td>For pop</td><td>Flow variable. <code>true</code>, <code>1</code> or <code>yes</code> enables the pop for that call.</td></tr>
   <tr><td><code>keepAlive</code></td><td>No</td><td>Off by default. <code>true</code>, <code>1</code> or <code>yes</code> turns it on.</td></tr>
   <tr><td><code>muniValue</code></td><td>No</td><td>The call type that leaves out phone and context. Default <code>MUNI</code>.</td></tr>
-  <tr><td><code>callType</code></td><td>For pop</td><td>Flow variable holding the call type.</td></tr>
-  <tr><td><code>channelKey</code></td><td>For pop</td><td>Flow variable. Becomes <code>channel</code>.</td></tr>
-  <tr><td><code>flexibleId</code></td><td>For pop</td><td>Flow variable. Becomes <code>source_id</code>.</td></tr>
-  <tr><td><code>ciscoCallId</code></td><td>For pop</td><td>Flow variable. Becomes <code>external_ref</code>. Used to make sure each call opens once.</td></tr>
-  <tr><td><code>customerPhone</code></td><td>Non-MUNI calls</td><td>Flow variable. Becomes <code>phone</code>.</td></tr>
+  <tr><td><code>popVar</code>, <code>callTypeVar</code>, <code>channelKeyVar</code>, <code>flexibleIdVar</code>, <code>callIdVar</code>, <code>phoneVar</code></td><td>Only if your names differ</td><td>The names of your flow variables, if they are not the defaults listed below. For example <code>"callIdVar": "My_Call_Id"</code>.</td></tr>
 </table></div>
 
+<h2>Call data</h2>
+<p class="sub">The call data is handed to the widget as <strong>one property</strong>, the same way the Desktop's own widgets receive it. Add this next to <code>attributes</code>:</p>
+<pre><span class="k">"properties"</span>: { <span class="k">"callAssociatedData"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData"</span> }</pre>
+<div class="warn">&#9888;&#65039; <strong>Do not bind each variable as its own attribute</strong> (for example <code>"$STORE.agentContact.taskSelected.callAssociatedData.Cisco_Call_Id.value"</code>). In testing on the Desktop, that stopped the widget from showing at all. Use the single property above.</div>
+
 <h2>Flow variables</h2>
-<p class="sub">Each one must be marked <strong>Agent Viewable</strong> in the flow, or the Desktop cannot read it. The names below are the ones used in the sample layout. Use your own names and change the matching path in the layout.</p>
+<p class="sub">Each one must be marked <strong>Agent Viewable</strong> in the flow, or the Desktop cannot pass it to the widget. These are the names the widget looks for. If yours differ, set the matching attribute.</p>
 <div class="tablewrap"><table>
-  <tr><th>Flow variable</th><th>Layout path</th></tr>
-  <tr><td><code>popNewCallsOnWidget</code></td><td><code>$STORE.agentContact.taskSelected.callAssociatedData.popNewCallsOnWidget.value</code></td></tr>
-  <tr><td><code>CallType</code></td><td><code>&hellip;callAssociatedData.CallType.value</code></td></tr>
-  <tr><td><code>Channel_Key</code></td><td><code>&hellip;callAssociatedData.Channel_Key.value</code></td></tr>
-  <tr><td><code>Flexible_Id</code></td><td><code>&hellip;callAssociatedData.Flexible_Id.value</code></td></tr>
-  <tr><td><code>Cisco_Call_Id</code></td><td><code>&hellip;callAssociatedData.Cisco_Call_Id.value</code></td></tr>
-  <tr><td><code>Customer_Phone</code></td><td><code>&hellip;callAssociatedData.Customer_Phone.value</code></td></tr>
+  <tr><th>Flow variable (default name)</th><th>Used for</th><th>Rename with</th></tr>
+  <tr><td><code>popNewCallsOnWidget</code></td><td><code>true</code> opens the Verint page for this call</td><td><code>popVar</code></td></tr>
+  <tr><td><code>CallType</code></td><td>Compared with <code>muniValue</code></td><td><code>callTypeVar</code></td></tr>
+  <tr><td><code>Channel_Key</code></td><td>Becomes <code>channel</code></td><td><code>channelKeyVar</code></td></tr>
+  <tr><td><code>Flexible_Id</code></td><td>Becomes <code>source_id</code></td><td><code>flexibleIdVar</code></td></tr>
+  <tr><td><code>Cisco_Call_Id</code></td><td>Becomes <code>external_ref</code>. Also makes sure each call opens only once.</td><td><code>callIdVar</code></td></tr>
+  <tr><td><code>Customer_Phone</code></td><td>Becomes <code>phone</code> (not used for MUNI calls)</td><td><code>phoneVar</code></td></tr>
 </table></div>
 
 <h2>Put it all together</h2>
@@ -132,18 +132,15 @@
     <span class="k">"id"</span>: <span class="s">"verint-crm"</span>,
     <span class="k">"widgets"</span>: { <span class="k">"left"</span>: {
       <span class="k">"comp"</span>: <span class="s">"verint-iframe"</span>,
-      <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.1.0/verintHandler.js"</span>,
+      <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.2.0/verintHandler.js"</span>,
       <span class="k">"attributes"</span>: {
         <span class="k">"baseUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/interactions/create"</span>,
         <span class="k">"idleUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/"</span>,
-        <span class="k">"popNewCallsOnWidget"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.popNewCallsOnWidget.value"</span>,
         <span class="k">"keepAlive"</span>: <span class="s">"true"</span>,
-        <span class="k">"muniValue"</span>: <span class="s">"MUNI"</span>,
-        <span class="k">"callType"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.CallType.value"</span>,
-        <span class="k">"channelKey"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Channel_Key.value"</span>,
-        <span class="k">"flexibleId"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Flexible_Id.value"</span>,
-        <span class="k">"ciscoCallId"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Cisco_Call_Id.value"</span>,
-        <span class="k">"customerPhone"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Customer_Phone.value"</span>
+        <span class="k">"muniValue"</span>: <span class="s">"MUNI"</span>
+      },
+      <span class="k">"properties"</span>: {
+        <span class="k">"callAssociatedData"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData"</span>
       }
     } },
     <span class="k">"layout"</span>: { <span class="k">"areas"</span>: [["left"]], <span class="k">"size"</span>: { <span class="k">"cols"</span>: [1], <span class="k">"rows"</span>: [1] } }
@@ -171,7 +168,7 @@
   <div class="card" style="--c:var(--blue)"><h3><span class="tag">Memory</span> keep-alive in VDI</h3>
     <p>With keep-alive on, the hidden page keeps running so the agent returns to where they were. In a virtual desktop it uses a little more memory. Turn it off for teams that do not need it.</p></div>
   <div class="card" style="--c:var(--green)"><h3><span class="tag">Updates</span> versions</h3>
-    <p>The script address ends in a version (<code>@v1.1.0</code>). Update the layout when you want a newer release, and test it first. Existing versions never change.</p></div>
+    <p>The script address ends in a version (<code>@v1.2.0</code>). Update the layout when you want a newer release, and test it first. Existing versions never change.</p></div>
   <div class="card" style="--c:var(--purple)"><h3><span class="tag">Settle time</span></h3>
     <p>The widget waits about a third of a second when a call arrives, so that all the values update together before it decides.</p></div>
 </div>
@@ -182,7 +179,7 @@
   <tr><th>Console message</th><th>Meaning</th></tr>
   <tr><td><code>Loading: &lt;url&gt;</code></td><td>The widget opened that page. If the page is blank, the Verint site is refusing to be framed.</td></tr>
   <tr><td><code>call &lt;id&gt; ignored (popNewCallsOnWidget is not true)</code></td><td>Working as designed. The agent stays on the open page.</td></tr>
-  <tr><td><code>pop is on but waiting for: &hellip;</code></td><td>Pop is on, but those values are not set yet. Check the flow sets them and marks them Agent Viewable.</td></tr>
+  <tr><td><code>pop is on but waiting for: &hellip;</code></td><td>Pop is on, but those values are not set yet. Check the flow sets them, marks them Agent Viewable, and that the names match (or are renamed with the <code>&hellip;Var</code> attributes).</td></tr>
   <tr><td><code>pop for call &lt;id&gt;</code></td><td>A screen pop was opened for that call. It will not open again for the same call.</td></tr>
   <tr><td>Nothing logged at all</td><td>The script did not load. Check the script address in the Network tab, and that <code>comp</code> is <code>verint-iframe</code>.</td></tr>
 </table></div>
