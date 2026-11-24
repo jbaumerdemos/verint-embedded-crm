@@ -4,6 +4,8 @@ A Webex Contact Center Agent Desktop widget that embeds a Verint CRM page as a f
 
 Not a Cisco or Verint product. A demo widget, provided as is.
 
+For a friendly walkthrough of every option, see [`verint_widget_guide.html`](verint_widget_guide.html) (download and open it in a browser).
+
 ## Add it to a desktop layout
 
 Load the script from jsDelivr and add the widget to the agent, supervisor or supervisorAgent `navigation`. Pin a version tag so layouts don't change under you:

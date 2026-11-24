@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verint CRM Widget: Options Guide</title>
+<style>
+  :root {
+    --bg:#f6f4ff; --card:#ffffff; --ink:#23213a; --muted:#6b6985; --line:#e4e0f5;
+    --purple:#7c5cff; --teal:#12b5a6; --orange:#ff8a3d; --pink:#ff5c8a; --blue:#3b9cff; --green:#38b865;
+    --code:#1f1d33; --codeink:#e9e6ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14122a; --card:#1e1b3a; --ink:#f0eeff; --muted:#a9a6c9; --line:#33305a; --code:#0d0b1f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:960px; margin:0 auto; padding:0 16px 56px; }
+  header { background:linear-gradient(120deg,var(--purple),var(--pink) 55%,var(--orange)); color:#fff; padding:44px 16px 56px; margin-bottom:-28px; }
+  header .in { max-width:960px; margin:0 auto; }
+  h1 { margin:0 0 8px; font-size:clamp(26px,5vw,38px); line-height:1.15; }
+  header p { margin:0; font-size:18px; opacity:.95; max-width:680px; }
+  h2 { margin:40px 0 6px; font-size:24px; }
+  .sub { color:var(--muted); margin:0 0 18px; }
+  .steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .step { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 6px 18px rgba(80,60,160,.08); }
+  .step b { display:inline-grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--purple); color:#fff; margin-bottom:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-left:6px solid var(--c); border-radius:16px; padding:16px 18px; box-shadow:0 6px 18px rgba(80,60,160,.08); }
+  .card h3 { margin:0 0 4px; font-size:18px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .card p { margin:4px 0; }
+  .tag { font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:#fff; background:var(--c); border-radius:999px; padding:2px 10px; }
+  code { font-family:ui-monospace,Consolas,monospace; font-size:.9em; background:color-mix(in srgb,var(--c,var(--purple)) 14%,transparent); padding:1px 6px; border-radius:6px; }
+  pre { background:var(--code); color:var(--codeink); padding:16px; border-radius:14px; overflow:auto; font:13.5px/1.5 ui-monospace,Consolas,monospace; }
+  pre .k { color:#ffb86b; } pre .s { color:#7ee0c3; } pre .c { color:#8a86b8; }
+  .mode { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px) { .mode { grid-template-columns:1fr; } }
+  .tip { background:linear-gradient(90deg,color-mix(in srgb,var(--orange) 20%,var(--card)),var(--card)); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:14px 0; }
+  .warn { background:linear-gradient(90deg,color-mix(in srgb,var(--pink) 18%,var(--card)),var(--card)); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; border:1px solid var(--line); }
+  th,td { text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:color-mix(in srgb,var(--purple) 16%,var(--card)); }
+  tr:last-child td { border-bottom:0; }
+  .tablewrap { overflow-x:auto; }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>🧩 Verint CRM Widget: Options Guide</h1>
+  <p>Embed Verint as a full-size page in the Agent Desktop, and choose per team whether a new call pops a record or leaves the agent where they are.</p>
+</div></header>
+
+<div class="wrap">
+
+<h2>How it works, in 4 steps</h2>
+<p class="sub">Everything is set in the <code>attributes</code> of the <code>verint-iframe</code> entry in your desktop layout, plus a few flow variables.</p>
+<div class="steps">
+  <div class="step"><b>1</b><br><strong>Desktop loads</strong><br>The widget shows your <code>idleUrl</code>, such as the Verint home page, as soon as the tab is opened.</div>
+  <div class="step"><b>2</b><br><strong>A call arrives</strong><br>The flow can set <code>popNewCallsOnWidget</code> and the values the Verint page needs.</div>
+  <div class="step"><b>3</b><br><strong>Pop or stay</strong><br>Pop is <code>true</code> and every required value is set: the record opens. Otherwise the agent stays on their open page.</div>
+  <div class="step"><b>4</b><br><strong>Call ends</strong><br>The page is left alone. The agent carries on with whatever is on screen.</div>
+</div>
+
+<h2>The options at a glance</h2>
+<p class="sub">Four choices cover almost every team.</p>
+<div class="grid">
+  <div class="card" style="--c:var(--purple)"><h3><span class="tag">popNewCallsOnWidget</span></h3>
+    <p>A flow variable. <code>true</code> (also <code>1</code> or <code>yes</code>) opens the Verint create page for the new call. Anything else, or not set, ignores the call so the agent can take a call and come back to their work.</p></div>
+  <div class="card" style="--c:var(--teal)"><h3><span class="tag">keepAlive</span> on or off</h3>
+    <p>On by default. The page keeps its place when the agent clicks to another tab and back. <code>"false"</code> reloads it each time the tab is opened.</p></div>
+  <div class="card" style="--c:var(--orange)"><h3><span class="tag">idleUrl</span> first page</h3>
+    <p>What the tab shows before any call has been popped. It is shown once, and is not reloaded when a call ends.</p></div>
+  <div class="card" style="--c:var(--blue)"><h3><span class="tag">callType</span> and <code>muniValue</code></h3>
+    <p>When the call type matches <code>muniValue</code> (default <code>MUNI</code>, not case sensitive), the pop leaves out the phone number and the <code>context</code> value.</p></div>
+</div>
+
+<h2>Pick the behavior for each team</h2>
+<p class="sub">Set the flow variable per queue or entry point. The layout stays the same.</p>
+<div class="tablewrap"><table>
+  <tr><th>What the team wants</th><th>Set this</th><th>What the agent sees</th></tr>
+  <tr><td><strong>Keep working in Verint, take a call, come back</strong></td><td><code>popNewCallsOnWidget</code> = false or leave it unset. <code>keepAlive</code> on.</td><td>The page stays exactly as it was, even after switching tabs or taking calls.</td></tr>
+  <tr><td><strong>New record for every call</strong></td><td><code>popNewCallsOnWidget</code> = <code>true</code>, with all required values set.</td><td>Each new call opens its Verint page. The same call never opens twice.</td></tr>
+  <tr><td><strong>Always start fresh when the tab is opened</strong></td><td><code>keepAlive</code> = <code>"false"</code></td><td>The page reloads whenever the agent returns to the tab.</td></tr>
+</table></div>
+
+<div class="tip">💡 <strong>Missing values?</strong> If pop is <code>true</code> but a required value is not set yet, the widget waits for it and opens the page as soon as it arrives. If it never arrives, the agent simply stays on the current page.</div>
+
+<h2>What gets opened</h2>
+<p class="sub">The pop builds the URL from your <code>baseUrl</code> and the flow variables.</p>
+<div class="mode">
+  <div class="card" style="--c:var(--green)"><h3>Call type matches <code>muniValue</code></h3>
+    <p><code>{baseUrl}?channel=&hellip;&amp;source_id=&hellip;&amp;external_ref=&hellip;</code></p></div>
+  <div class="card" style="--c:var(--pink)"><h3>Any other call type</h3>
+    <p><code>{baseUrl}?channel=&hellip;&amp;context=reporter&amp;phone=&hellip;&amp;source_id=&hellip;&amp;external_ref=&hellip;</code></p></div>
+</div>
+
+<h2>Attribute reference</h2>
+<p class="sub">The Desktop passes attribute names in lowercase. The widget handles that for you.</p>
+<div class="tablewrap"><table>
+  <tr><th>Attribute</th><th>Needed?</th><th>Meaning</th></tr>
+  <tr><td><code>baseUrl</code></td><td>Yes</td><td>The Verint create-interaction address. Must start with <code>https://</code>.</td></tr>
+  <tr><td><code>idleUrl</code></td><td>Recommended</td><td>The page shown before any call is popped. Without it the tab shows "Waiting for an active call".</td></tr>
+  <tr><td><code>popNewCallsOnWidget</code></td><td>For pop</td><td>Flow variable. <code>true</code>, <code>1</code> or <code>yes</code> enables the pop for that call.</td></tr>
+  <tr><td><code>keepAlive</code></td><td>No</td><td><code>true</code> by default. <code>false</code>, <code>0</code>, <code>no</code> or <code>off</code> turns it off.</td></tr>
+  <tr><td><code>muniValue</code></td><td>No</td><td>The call type that leaves out phone and context. Default <code>MUNI</code>.</td></tr>
+  <tr><td><code>callType</code></td><td>For pop</td><td>Flow variable holding the call type.</td></tr>
+  <tr><td><code>channelKey</code></td><td>For pop</td><td>Flow variable. Becomes <code>channel</code>.</td></tr>
+  <tr><td><code>flexibleId</code></td><td>For pop</td><td>Flow variable. Becomes <code>source_id</code>.</td></tr>
+  <tr><td><code>ciscoCallId</code></td><td>For pop</td><td>Flow variable. Becomes <code>external_ref</code>. Used to make sure each call opens once.</td></tr>
+  <tr><td><code>customerPhone</code></td><td>Non-MUNI calls</td><td>Flow variable. Becomes <code>phone</code>.</td></tr>
+</table></div>
+
+<h2>Flow variables</h2>
+<p class="sub">Each one must be marked <strong>Agent Viewable</strong> in the flow, or the Desktop cannot read it. The names below are the ones used in the sample layout. Use your own names and change the matching path in the layout.</p>
+<div class="tablewrap"><table>
+  <tr><th>Flow variable</th><th>Layout path</th></tr>
+  <tr><td><code>popNewCallsOnWidget</code></td><td><code>$STORE.agentContact.taskSelected.callAssociatedData.popNewCallsOnWidget.value</code></td></tr>
+  <tr><td><code>CallType</code></td><td><code>&hellip;callAssociatedData.CallType.value</code></td></tr>
+  <tr><td><code>Channel_Key</code></td><td><code>&hellip;callAssociatedData.Channel_Key.value</code></td></tr>
+  <tr><td><code>Flexible_Id</code></td><td><code>&hellip;callAssociatedData.Flexible_Id.value</code></td></tr>
+  <tr><td><code>Cisco_Call_Id</code></td><td><code>&hellip;callAssociatedData.Cisco_Call_Id.value</code></td></tr>
+  <tr><td><code>Customer_Phone</code></td><td><code>&hellip;callAssociatedData.Customer_Phone.value</code></td></tr>
+</table></div>
+
+<h2>Put it all together</h2>
+<p class="sub">Add this to the <code>navigation</code> list of the agent, supervisor and supervisorAgent personas. Pin the version in the script address so a later release never changes your desktop unexpectedly.</p>
+<pre><span class="c">// replace YOUR-VERINT-HOST and the icon address</span>
+{
+  <span class="k">"nav"</span>: { <span class="k">"label"</span>: <span class="s">"Verint CRM"</span>, <span class="k">"icon"</span>: <span class="s">"https://example.com/verint-icon.png"</span>,
+          <span class="k">"iconType"</span>: <span class="s">"other"</span>, <span class="k">"navigateTo"</span>: <span class="s">"verint-crm"</span>, <span class="k">"align"</span>: <span class="s">"top"</span> },
+  <span class="k">"page"</span>: {
+    <span class="k">"id"</span>: <span class="s">"verint-crm"</span>,
+    <span class="k">"widgets"</span>: { <span class="k">"left"</span>: {
+      <span class="k">"comp"</span>: <span class="s">"verint-iframe"</span>,
+      <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.0/verintHandler.js"</span>,
+      <span class="k">"attributes"</span>: {
+        <span class="k">"baseUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/interactions/create"</span>,
+        <span class="k">"idleUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/"</span>,
+        <span class="k">"popNewCallsOnWidget"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.popNewCallsOnWidget.value"</span>,
+        <span class="k">"keepAlive"</span>: <span class="s">"true"</span>,
+        <span class="k">"muniValue"</span>: <span class="s">"MUNI"</span>,
+        <span class="k">"callType"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.CallType.value"</span>,
+        <span class="k">"channelKey"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Channel_Key.value"</span>,
+        <span class="k">"flexibleId"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Flexible_Id.value"</span>,
+        <span class="k">"ciscoCallId"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Cisco_Call_Id.value"</span>,
+        <span class="k">"customerPhone"</span>: <span class="s">"$STORE.agentContact.taskSelected.callAssociatedData.Customer_Phone.value"</span>
+      }
+    } },
+    <span class="k">"layout"</span>: { <span class="k">"areas"</span>: [["left"]], <span class="k">"size"</span>: { <span class="k">"cols"</span>: [1], <span class="k">"rows"</span>: [1] } }
+  }
+}</pre>
+
+<h2>Optional: alert when the caller hangs up</h2>
+<p class="sub">A separate widget that shows a desktop notification when a contact ends while the browser is minimized or in the background. Add it to the layout's headless area.</p>
+<pre><span class="k">"call-ended-notifier"</span>: {
+  <span class="k">"comp"</span>: <span class="s">"call-ended-notifier"</span>,
+  <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/wxcc-desktop-widgets@v1.0.0/dist/call-ended-notifier.js"</span>,
+  <span class="k">"attributes"</span>: { <span class="k">"title"</span>: <span class="s">"Caller disconnected"</span>, <span class="k">"onlyHidden"</span>: <span class="s">"true"</span> }
+}</pre>
+<div class="grid">
+  <div class="card" style="--c:var(--teal)"><h3><span class="tag">onlyHidden</span></h3>
+    <p><code>true</code> (default) shows the notification only when the Desktop is hidden or not in focus. <code>false</code> always shows it.</p></div>
+  <div class="card" style="--c:var(--orange)"><h3><span class="tag">Notifications</span></h3>
+    <p>The browser must allow notifications for the Desktop's address. Clicking the notification brings the Desktop back to the front. Windows Focus Assist can hide it.</p></div>
+</div>
+
+<h2>Things to know</h2>
+<div class="grid">
+  <div class="card" style="--c:var(--pink)"><h3><span class="tag">Sign-in</span> framing</h3>
+    <p>The Verint site, and the single sign-on page it redirects to, must allow being shown inside the Desktop. If not, agents see a blank page or "refused to connect". Your IT team can allow your Desktop address as a permitted frame ancestor, and set the session cookies to <code>SameSite=None; Secure</code>.</p></div>
+  <div class="card" style="--c:var(--blue)"><h3><span class="tag">Memory</span> keep-alive in VDI</h3>
+    <p>With keep-alive on, the hidden page keeps running so the agent returns to where they were. In a virtual desktop it uses a little more memory. Turn it off for teams that do not need it.</p></div>
+  <div class="card" style="--c:var(--green)"><h3><span class="tag">Updates</span> versions</h3>
+    <p>The script address ends in a version (<code>@v1.0.0</code>). Update the layout when you want a newer release, and test it first. Existing versions never change.</p></div>
+  <div class="card" style="--c:var(--purple)"><h3><span class="tag">Settle time</span></h3>
+    <p>The widget waits about a third of a second when a call arrives, so that all the values update together before it decides.</p></div>
+</div>
+
+<h2>If something looks wrong</h2>
+<p class="sub">Open the browser console (F12) and filter on <code>verint-iframe</code>. The widget logs each decision.</p>
+<div class="tablewrap"><table>
+  <tr><th>Console message</th><th>Meaning</th></tr>
+  <tr><td><code>loading &lt;url&gt;</code></td><td>The widget opened that page. If the page is blank, the Verint site is refusing to be framed.</td></tr>
+  <tr><td><code>call ignored: popNewCallsOnWidget is not true</code></td><td>Working as designed. The agent stays on the open page.</td></tr>
+  <tr><td><code>waiting for variables: &hellip;</code></td><td>Pop is on, but those values are not set yet. Check the flow sets them and marks them Agent Viewable.</td></tr>
+  <tr><td><code>render { callId, rawCallId, pop, keepAlive }</code></td><td>What the widget saw for the current call. An empty <code>callId</code> means no call id was received.</td></tr>
+  <tr><td>Nothing logged at all</td><td>The script did not load. Check the script address in the Network tab, and that <code>comp</code> is <code>verint-iframe</code>.</td></tr>
+</table></div>
+
+<h2>Quick tips</h2>
+<div class="tip">✅ Test with the flow variable set to <code>true</code> and to <code>false</code> on the same agent, so the team sees both behaviors.</div>
+<div class="tip">🔁 After changing the script address or the layout, upload the layout and hard-refresh the Desktop (<strong>Ctrl+F5</strong>).</div>
+<div class="tip">🧪 The same call never opens twice. To re-test a pop, use a new call.</div>
+
+</div>
+</body>
+</html>
