@@ -10,6 +10,13 @@
 //  - Each call is popped once (remembered for the whole Desktop session), so returning to the tab or
 //    attribute updates never create a duplicate interaction.
 //  - keepAlive: opt-in exactly like iframeHandler (keepAlive="true").
+//  - Call variables: pass the whole call-data object as a property, the same way the Desktop's own
+//    widgets do. Binding each variable as its own deep "$STORE...callAssociatedData.X.value"
+//    attribute stopped the widget from showing on the Desktop.
+//      "properties": { "callAssociatedData": "$STORE.agentContact.taskSelected.callAssociatedData" }
+//    Variable names default to popNewCallsOnWidget, CallType, Channel_Key, Flexible_Id, Cisco_Call_Id
+//    and Customer_Phone; change them with popVar, callTypeVar, channelKeyVar, flexibleIdVar,
+//    callIdVar and phoneVar.
 
 class VerintIframeComponent extends HTMLElement {                      // VERINT: own class name (both scripts can load together)
   constructor() {
@@ -18,18 +25,35 @@ class VerintIframeComponent extends HTMLElement {                      // VERINT
   }
 
   connectedCallback() {
+    // VERINT: if the Desktop set the property before this script loaded, re-apply it through the setter
+    if (Object.prototype.hasOwnProperty.call(this, 'callAssociatedData')) {
+      const v = this.callAssociatedData;
+      delete this.callAssociatedData;
+      this.callAssociatedData = v;
+    }
     this.render();
   }
+
+  // VERINT: the call variables arrive as ONE object, the same way the Desktop's own widgets receive call
+  // data. Layout: "properties": { "callAssociatedData": "$STORE.agentContact.taskSelected.callAssociatedData" }
+  set callAssociatedData(v) {
+    this._cad = v;
+    if (this.isConnected) this.scheduleRender();
+  }
+  get callAssociatedData() { return this._cad; }
 
   disconnectedCallback() {
     clearTimeout(this._timer);                                         // VERINT
     this.detachKept();
   }
 
-  // VERINT: watch the call variables too (iframeHandler only watches frameurl)
+  // VERINT: watch the Verint settings too (iframeHandler only watches frameurl). The call variables
+  // normally arrive through the callAssociatedData property; the per-variable attributes are still
+  // watched so older layouts keep working.
   static get observedAttributes() {
-    return ['idleurl', 'baseurl', 'popnewcallsonwidget', 'calltype', 'munivalue',
-            'channelkey', 'flexibleid', 'ciscocallid', 'customerphone'];
+    return ['idleurl', 'baseurl', 'munivalue',
+            'popvar', 'calltypevar', 'channelkeyvar', 'flexibleidvar', 'callidvar', 'phonevar',
+            'popnewcallsonwidget', 'calltype', 'channelkey', 'flexibleid', 'ciscocallid', 'customerphone'];
   }
 
   // ── Keep-alive mode (opt-in with the attribute keepAlive="true") ─────────
@@ -143,11 +167,29 @@ class VerintIframeComponent extends HTMLElement {                      // VERINT
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue !== newValue) {
-      // VERINT: wait briefly. When a call arrives the Desktop updates the variables one at a time, so for
-      // a moment the new call id can sit next to the previous call's other values.
-      clearTimeout(this._timer);
-      this._timer = setTimeout(() => this.render(), 300);
+      this.scheduleRender();                                           // VERINT
     }
+  }
+
+  // VERINT: wait briefly. When a call arrives the Desktop can update values one at a time, so for
+  // a moment the new call id can sit next to the previous call's other values.
+  scheduleRender() {
+    clearTimeout(this._timer);
+    this._timer = setTimeout(() => this.render(), 300);
+  }
+
+  // VERINT: value of a call variable. Read from the callAssociatedData property by name (the name can be
+  // changed with an attribute such as callIdVar="My_Call_Id"); older layouts that bind each value as its
+  // own attribute still work through legacyAttr.
+  cad(nameAttr, defaultName, legacyAttr) {
+    const name = this.val(nameAttr) || defaultName;
+    const c = this._cad;
+    if (c && typeof c === 'object') {
+      const entry = c[name];
+      const v = entry && typeof entry === 'object' ? entry.value : entry;
+      if (v != null && String(v).trim() !== '') return String(v).trim();
+    }
+    return this.val(legacyAttr);
   }
 
   isValidUrl(value) {
@@ -170,16 +212,16 @@ class VerintIframeComponent extends HTMLElement {                      // VERINT
   // Returns the page to show: a new pop, else the page already open, else idleUrl.
   targetURL() {
     const popped = window.__verintPopped || (window.__verintPopped = new Set());
-    const rawId = this.val('ciscoCallId');
+    const rawId = this.cad('callIdVar', 'Cisco_Call_Id', 'ciscoCallId');
     const callId = /^[A-Za-z0-9._:-]{6,}$/.test(rawId) ? rawId : '';   // ignore '', '{}', '[object Object]'
-    const pop = ['true', '1', 'yes'].includes(this.val('popNewCallsOnWidget').toLowerCase());
+    const pop = ['true', '1', 'yes'].includes(this.cad('popVar', 'popNewCallsOnWidget', 'popNewCallsOnWidget').toLowerCase());
 
     if (callId && pop && !popped.has(callId)) {
       const base = this.val('baseUrl');
-      const isMuni = this.val('callType').toUpperCase() === (this.val('muniValue') || 'MUNI').toUpperCase();
-      const channel = this.val('channelKey');
-      const sourceId = this.val('flexibleId');
-      const phone = this.val('customerPhone');
+      const isMuni = this.cad('callTypeVar', 'CallType', 'callType').toUpperCase() === (this.val('muniValue') || 'MUNI').toUpperCase();
+      const channel = this.cad('channelKeyVar', 'Channel_Key', 'channelKey');
+      const sourceId = this.cad('flexibleIdVar', 'Flexible_Id', 'flexibleId');
+      const phone = this.cad('phoneVar', 'Customer_Phone', 'customerPhone');
       const missing = [];
       if (!this.isValidUrl(base)) missing.push('baseUrl');
       if (!channel) missing.push('Channel_Key');
