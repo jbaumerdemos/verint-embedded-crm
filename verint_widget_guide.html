@@ -132,7 +132,7 @@
     <span class="k">"id"</span>: <span class="s">"verint-crm"</span>,
     <span class="k">"widgets"</span>: { <span class="k">"left"</span>: {
       <span class="k">"comp"</span>: <span class="s">"verint-iframe"</span>,
-      <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.2/verintHandler.js"</span>,
+      <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.3/verintHandler.js"</span>,
       <span class="k">"attributes"</span>: {
         <span class="k">"baseUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/interactions/create"</span>,
         <span class="k">"idleUrl"</span>: <span class="s">"https://YOUR-VERINT-HOST/"</span>,
@@ -154,7 +154,7 @@
 <p class="sub">A separate widget that shows a desktop notification when a contact ends while the browser is minimized or in the background. Add it to the layout's headless area.</p>
 <pre><span class="k">"call-ended-notifier"</span>: {
   <span class="k">"comp"</span>: <span class="s">"call-ended-notifier"</span>,
-  <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/wxcc-desktop-widgets@v1.0.2/dist/call-ended-notifier.js"</span>,
+  <span class="k">"script"</span>: <span class="s">"https://cdn.jsdelivr.net/gh/jbaumerdemos/wxcc-desktop-widgets@v1.0.3/dist/call-ended-notifier.js"</span>,
   <span class="k">"attributes"</span>: { <span class="k">"title"</span>: <span class="s">"Caller disconnected"</span>, <span class="k">"onlyHidden"</span>: <span class="s">"true"</span> }
 }</pre>
 <div class="grid">
@@ -169,9 +169,9 @@
   <div class="card" style="--c:var(--pink)"><h3><span class="tag">Sign-in</span> framing</h3>
     <p>The Verint site, and the single sign-on page it redirects to, must allow being shown inside the Desktop. If not, agents see a blank page or "refused to connect". Your IT team can allow your Desktop address as a permitted frame ancestor, and set the session cookies to <code>SameSite=None; Secure</code>.</p></div>
   <div class="card" style="--c:var(--blue)"><h3><span class="tag">Memory</span> keep-alive in VDI</h3>
-    <p>With keep-alive on, the hidden page keeps running so the agent returns to where they were. In a virtual desktop it uses a little more memory. Turn it off for teams that do not need it.</p></div>
+    <p>With keep-alive on, the hidden page keeps running so the agent returns to where they were. In a virtual desktop it uses a little more memory. Turn it off for teams that do not need it. If the Desktop ever stops the kept page from lining up with the tab, the widget falls back to a normal embedded page on its own, so agents never see a blank area.</p></div>
   <div class="card" style="--c:var(--green)"><h3><span class="tag">Updates</span> versions</h3>
-    <p>The script address ends in a version (<code>@v1.0.2</code>). Update the layout when you want a newer release, and test it first. Existing versions never change.</p></div>
+    <p>The script address ends in a version (<code>@v1.0.3</code>). Update the layout when you want a newer release, and test it first. Existing versions never change.</p></div>
   <div class="card" style="--c:var(--purple)"><h3><span class="tag">Settle time</span></h3>
     <p>The widget waits about a third of a second when a call arrives, so that all the values update together before it decides.</p></div>
 </div>

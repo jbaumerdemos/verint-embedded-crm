@@ -31,7 +31,12 @@ const sizeOf = (el) => { const r = el.getBoundingClientRect(); return { r, ok: r
 
 window.__verintDebug = () => {
   const f = KEEP.frame, fr = f && f.getBoundingClientRect();
+  const cx = f ? fr.left + fr.width / 2 : 0, cy = f ? fr.top + fr.height / 2 : 0;
+  const top = f && fr.width > 0 ? document.elementFromPoint(cx, cy) : null;
   return JSON.stringify({
+    keepAliveFailed: !!KEEP.failed,
+    frameIsOnTopAtCenter: top === f,
+    topElementAtCenter: top ? top.nodeName + (top.id ? '#' + top.id : '') : null,
     frame: f ? { src: f.getAttribute('src'), display: f.style.display, rect: [fr.left, fr.top, fr.width, fr.height].map(Math.round) } : null,
     layerParent: KEEP.layer && KEEP.layer.parentNode && (KEEP.layer.parentNode.id || KEEP.layer.parentNode.nodeName),
     owner: KEEP.owner ? [...KEEP.instances].indexOf(KEEP.owner) : null,
@@ -84,10 +89,11 @@ class VerintIframe extends HTMLElement {
     return v;
   }
 
-  // keepAlive is on unless explicitly turned off
-  keep() { return !['false', '0', 'no', 'off'].includes(this.val('keepalive').toLowerCase()); }
+  // keepAlive is on unless explicitly turned off, or unless the shared iframe failed to line up with the
+  // widget area (see place()), in which case we fall back to the plain in-widget iframe
+  keep() { return !KEEP.failed && !['false', '0', 'no', 'off'].includes(this.val('keepalive').toLowerCase()); }
   popped() { return this.keep() ? KEEP.popped : this._popped; }
-  current() { return this.keep() ? (KEEP.frame ? KEEP.frame.getAttribute('src') : null) : this._lastSrc; }
+  current() { return this.keep() ? (KEEP.frame ? KEEP.frame.getAttribute('src') : null) : (this._lastSrc || this._fallbackSrc || null); }
 
   // ---- keep-alive plumbing ----
   // Nearest ancestor (crossing shadow roots) that forms its own stacking context, so the kept iframe
@@ -186,6 +192,32 @@ class VerintIframe extends HTMLElement {
     frame.style.top = (r.top - o.top) + 'px';
     frame.style.width = r.width + 'px';
     frame.style.height = r.height + 'px';
+    this.verify(frame, r);
+  }
+
+  // Safety net: if the iframe does not end up where we put it (something overrides its size or position),
+  // switch to the plain in-widget iframe so the agent still sees the page instead of a blank area.
+  verify(frame, r) {
+    const f = frame.getBoundingClientRect();
+    const off = Math.abs(f.left - r.left) > 2 || Math.abs(f.top - r.top) > 2 ||
+                Math.abs(f.width - r.width) > 2 || Math.abs(f.height - r.height) > 2;
+    if (!off) { this._badSince = 0; return; }
+    const now = Date.now();
+    if (!this._badSince) { this._badSince = now; return; }
+    if (now - this._badSince < 1500) return;
+    console.warn('[verint-iframe] keep-alive iframe does not line up with the widget area; falling back to the in-widget iframe',
+      { wanted: [r.left, r.top, r.width, r.height].map(Math.round), got: [f.left, f.top, f.width, f.height].map(Math.round) });
+    const src = frame.getAttribute('src');
+    KEEP.failed = true;
+    KEEP.owner = null;
+    frame.style.display = 'none';
+    for (const e of KEEP.instances) {
+      e._tracking = false;
+      e._popped = new Set(KEEP.popped);   // remember which calls were already shown
+      e._lastSrc = null;
+      e._fallbackSrc = src;
+      e.render();
+    }
   }
 
   // ---- display ----
