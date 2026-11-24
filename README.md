@@ -11,7 +11,7 @@ For a friendly walkthrough of every option, see [`verint_widget_guide.html`](ver
 Load the script from jsDelivr and add the widget to the agent, supervisor or supervisorAgent `navigation`. Pin a version tag so layouts don't change under you:
 
 ```
-https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandler.js
+https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.2/verintHandler.js
 ```
 
 ```json
@@ -22,7 +22,7 @@ https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandle
     "widgets": {
       "left": {
         "comp": "verint-iframe",
-        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.1/verintHandler.js",
+        "script": "https://cdn.jsdelivr.net/gh/jbaumerdemos/verint-embedded-crm@v1.0.2/verintHandler.js",
         "attributes": {
           "baseUrl": "https://YOUR-VERINT-HOST/interactions/create",
           "idleUrl": "https://YOUR-VERINT-HOST/",
@@ -73,7 +73,7 @@ WxCC passes attribute names in lowercase; the widget handles that.
 
 ## Keep-alive
 
-WxCC removes the widget when the agent clicks to another tab and builds a new one on return, and re-creating an iframe reloads it. With keep-alive on, the iframe lives in a fixed layer inside the Desktop's stacking layer and is only hidden when the tab is left, so the agent returns to exactly the page they were on. With `keepAlive="false"` the iframe lives inside the widget and reloads every time the tab is opened. The hidden iframe keeps its session running, which uses some memory (relevant in VDI).
+WxCC removes the widget when the agent clicks to another tab and builds a new one on return, and re-creating an iframe reloads it. With keep-alive on, the iframe lives in a fixed layer inside the Desktop's stacking layer and is only hidden when the tab is left, so the agent returns to exactly the page they were on. With `keepAlive="false"` the iframe lives inside the widget and reloads every time the tab is opened. The hidden iframe keeps its session running, which uses some memory (relevant in VDI). The Desktop can create more than one copy of the widget, some hidden, so only a visible copy is allowed to position the iframe. If the page is blank, run `__verintDebug()` in the browser console and check that the frame has a non-zero size and that an instance has a non-zero `slot`.
 
 ## Troubleshooting
 

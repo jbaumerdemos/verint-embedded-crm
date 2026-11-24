@@ -11,16 +11,36 @@
 // Keep-alive (attribute keepAlive, ON by default; set keepAlive="false" to turn it off)
 //  WxCC removes this component when the agent clicks to another tab and builds a new one when they
 //  come back, and moving/re-creating an <iframe> reloads it. With keep-alive on, the iframe lives in a
-//  fixed layer on <body>: it is positioned over the component while on screen and only hidden when the
-//  component is removed, so the agent returns to exactly the page they left. With keepAlive="false" the
-//  iframe lives inside the component and the page reloads each time the tab is opened.
+//  fixed layer: it is positioned over the visible component and only hidden when no component is
+//  visible, so the agent returns to exactly the page they left. With keepAlive="false" the iframe lives
+//  inside the component and the page reloads each time the tab is opened.
+//  WxCC can create more than one copy of the component (one may be hidden); only a copy that is
+//  actually visible (non-zero size) is allowed to position the shared iframe.
+//  Debug: run __verintDebug() in the browser console.
 //
 // URL built when popping:
 //   callType == MUNI : {base}?channel=..&source_id=..&external_ref=..
 //   anything else    : {base}?channel=..&context=reporter&phone=..&source_id=..&external_ref=..
 
 // State that must survive the component being removed and re-created
-const KEEP = window.__verintKeep || (window.__verintKeep = { popped: new Set(), frame: null, layer: null });
+const KEEP = window.__verintKeep || (window.__verintKeep = { popped: new Set(), frame: null, layer: null, owner: null, instances: new Set() });
+KEEP.instances = KEEP.instances || new Set();
+KEEP.owner = KEEP.owner || null;
+
+const sizeOf = (el) => { const r = el.getBoundingClientRect(); return { r, ok: r.width > 0 && r.height > 0 }; };
+
+window.__verintDebug = () => {
+  const f = KEEP.frame, fr = f && f.getBoundingClientRect();
+  return JSON.stringify({
+    frame: f ? { src: f.getAttribute('src'), display: f.style.display, rect: [fr.left, fr.top, fr.width, fr.height].map(Math.round) } : null,
+    layerParent: KEEP.layer && KEEP.layer.parentNode && (KEEP.layer.parentNode.id || KEEP.layer.parentNode.nodeName),
+    owner: KEEP.owner ? [...KEEP.instances].indexOf(KEEP.owner) : null,
+    instances: [...KEEP.instances].map((e) => {
+      const s = e._slot && e._slot.isConnected ? e._slot.getBoundingClientRect() : null;
+      return { connected: e.isConnected, slot: s ? [s.left, s.top, s.width, s.height].map(Math.round) : null, tracking: !!e._tracking };
+    }),
+  }, null, 1);
+};
 
 class VerintIframe extends HTMLElement {
   constructor() {
@@ -28,6 +48,8 @@ class VerintIframe extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._lastSrc = null;       // used when keep-alive is off
     this._popped = new Set();   // used when keep-alive is off
+    this._slot = null;
+    this._tracking = false;
   }
 
   static get observedAttributes() {
@@ -36,11 +58,16 @@ class VerintIframe extends HTMLElement {
   }
 
   connectedCallback() {
+    KEEP.instances.add(this);
     // Re-show the kept page straight away so there is no flash, then evaluate normally
     if (this.keep() && KEEP.frame && KEEP.frame.getAttribute('src')) this.attachKept(KEEP.frame.getAttribute('src'));
     this.schedule();
   }
-  disconnectedCallback() { clearTimeout(this._timer); this.detachKept(); }
+  disconnectedCallback() {
+    clearTimeout(this._timer);
+    this.detachKept();
+    KEEP.instances.delete(this);
+  }
   attributeChangedCallback(n, o, v) { if (o !== v) this.schedule(); }
 
   // WxCC updates attributes one at a time when a new call arrives, so for a moment the new call id
@@ -62,7 +89,7 @@ class VerintIframe extends HTMLElement {
   popped() { return this.keep() ? KEEP.popped : this._popped; }
   current() { return this.keep() ? (KEEP.frame ? KEEP.frame.getAttribute('src') : null) : this._lastSrc; }
 
-  // ---- keep-alive plumbing (same approach as iframeHandler.js) ----
+  // ---- keep-alive plumbing ----
   // Nearest ancestor (crossing shadow roots) that forms its own stacking context, so the kept iframe
   // paints below the Desktop's popups and never covers call alerts.
   findStackingParent() {
@@ -108,36 +135,57 @@ class VerintIframe extends HTMLElement {
     }
 
     this.shadowRoot.innerHTML = '<div style="width:100%;height:100%;min-height:400px;"></div>';
-    const slot = this.shadowRoot.firstElementChild;
-    this._kept = iframe;
-    iframe.style.display = 'block';
-
-    this._stopTracking && this._stopTracking();
-    let alive = true;
-    let last = '';
-    const track = () => {
-      if (!alive) return;
-      const r = slot.getBoundingClientRect();
-      // position:fixed is measured from the nearest ancestor with a transform/filter/contain, not the
-      // window, so subtract where the layer (top:0; left:0) actually ended up
-      const o = KEEP.layer.getBoundingClientRect();
-      const sig = r.left + ',' + r.top + ',' + r.width + ',' + r.height + ',' + o.left + ',' + o.top;
-      if (sig !== last) {
-        last = sig;
-        iframe.style.left = (r.left - o.left) + 'px';
-        iframe.style.top = (r.top - o.top) + 'px';
-        iframe.style.width = r.width + 'px';
-        iframe.style.height = r.height + 'px';
-      }
-      requestAnimationFrame(track);
-    };
-    requestAnimationFrame(track);
-    this._stopTracking = () => { alive = false; };
+    this._slot = this.shadowRoot.firstElementChild;
+    this.startTracking();
   }
 
-  detachKept() {
-    if (this._stopTracking) { this._stopTracking(); this._stopTracking = null; }
-    if (this._kept) { this._kept.style.display = 'none'; this._kept = null; }
+  // Each copy of the component runs a small loop; the visible one positions the shared iframe over itself
+  startTracking() {
+    if (this._tracking) return;
+    this._tracking = true;
+    const loop = () => {
+      if (!this._tracking) return;
+      this.place();
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+
+  stopTracking() {
+    this._tracking = false;
+    if (KEEP.owner === this) {
+      KEEP.owner = null;
+      if (KEEP.frame) KEEP.frame.style.display = 'none';
+    }
+  }
+
+  detachKept() { this.stopTracking(); }
+
+  place() {
+    const frame = KEEP.frame;
+    if (!frame || !this._slot) return;
+    const { r, ok } = this._slot.isConnected ? sizeOf(this._slot) : { r: null, ok: false };
+
+    if (!this.isConnected || !ok) {
+      // This copy is hidden or has no size: give up control and hide the iframe if we were driving it
+      if (KEEP.owner === this) { KEEP.owner = null; frame.style.display = 'none'; }
+      return;
+    }
+    if (KEEP.owner !== this) {
+      const ow = KEEP.owner;
+      const ownerVisible = ow && ow.isConnected && ow._slot && ow._slot.isConnected && sizeOf(ow._slot).ok;
+      if (ownerVisible) return;       // another visible copy already controls the iframe
+      KEEP.owner = this;
+    }
+
+    // position:fixed is measured from the nearest ancestor with a transform/filter/contain, not the
+    // window, so subtract where the layer (top:0; left:0) actually ended up
+    const o = KEEP.layer.getBoundingClientRect();
+    frame.style.display = 'block';
+    frame.style.left = (r.left - o.left) + 'px';
+    frame.style.top = (r.top - o.top) + 'px';
+    frame.style.width = r.width + 'px';
+    frame.style.height = r.height + 'px';
   }
 
   // ---- display ----
